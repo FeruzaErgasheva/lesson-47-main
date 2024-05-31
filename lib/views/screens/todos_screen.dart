@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:lesson47/models/todo_model.dart';
 import 'package:lesson47/viewmodels/todos_viewmodel.dart';
+import 'package:lesson47/views/widgets/manage_todo_dialog.dart';
+import 'package:lesson47/views/widgets/todo_tile.dart';
 
 class TodosScreen extends StatefulWidget {
   TodosScreen({super.key});
@@ -11,6 +14,37 @@ class TodosScreen extends StatefulWidget {
 class _TodosScreenState extends State<TodosScreen> {
   TodosViewmodel todosViewmodel = TodosViewmodel();
 
+  void deleteTodo(TodoModel todo) async {
+    final response = await showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text("ishonchingiz komilmi?"),
+          content: Text("Siz ${todo.title}todoni o'chirmoqchisiz."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: const Text("Bekor qilish"),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              child: const Text("Ha, ishonchim komil"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (response) {
+      await todosViewmodel.deleteTodo(todo.id);
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,7 +54,12 @@ class _TodosScreenState extends State<TodosScreen> {
             padding: EdgeInsets.only(right: 20),
             child: IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () {},
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => ManegTodoDialog(),
+                );
+              },
             ),
           ),
         ],
@@ -58,20 +97,13 @@ class _TodosScreenState extends State<TodosScreen> {
                     print(todos[index].title);
                     final newTodo = todos[index];
 
-                    return ListTile(
-                      title: Text(todos[index].title),
-                      subtitle: Text(todos[index].description),
-                      trailing: Checkbox(
-                        value: todos[index].isCompleted,
-                        onChanged: (value) {
-                          setState(() {
-                            todos[index].isCompleted =
-                                !todos[index].isCompleted;
-                            
-                          });
+                    return TodoTile(
+                        onEdit: () {},
+                        onDelete: () {
+                          deleteTodo(newTodo);
                         },
-                      ),
-                    );
+                        onChanged: () {},
+                        todo: newTodo);
                   },
                 );
         },
