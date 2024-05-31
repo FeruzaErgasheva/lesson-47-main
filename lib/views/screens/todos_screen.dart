@@ -45,6 +45,34 @@ class _TodosScreenState extends State<TodosScreen> {
     }
   }
 
+  void addTodo() async {
+    final data = await showDialog(
+      context: context,
+      builder: (context) => ManegTodoDialog(),
+    );
+    if (data != null) {
+      setState(() {
+        todosViewmodel.addTodo(
+            data["title"], data["description"], data["isCompleted"]);
+      });
+    }
+  }
+
+  void editTodo(TodoModel todo) async {
+    final data = await showDialog(
+      context: context,
+      builder: (context) => ManegTodoDialog(
+        todo: todo,
+      ),
+    );
+    if (data != null) {
+      setState(() {
+        todosViewmodel.editTodo(
+            todo.id, data["title"], data["description"], data["isCompleted"]);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,12 +82,7 @@ class _TodosScreenState extends State<TodosScreen> {
             padding: EdgeInsets.only(right: 20),
             child: IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => ManegTodoDialog(),
-                );
-              },
+              onPressed: addTodo,
             ),
           ),
         ],
@@ -67,46 +90,51 @@ class _TodosScreenState extends State<TodosScreen> {
         title: const Text("Todos"),
         centerTitle: true,
       ),
-      body: FutureBuilder(
-        future: todosViewmodel.list,
-        builder: (context, snapshot) {
-          print(snapshot.data);
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(snapshot.error.toString()),
-            );
-          }
-          if (!snapshot.hasData) {
-            return const Center(
-              child: Text("Todolar mavjud emas, iltimos qo'shing"),
-            );
-          }
-          final todos = snapshot.data;
-          return todos == null || todos.isEmpty
-              ? const Center(
-                  child: Text("Todolar mavjud emas, iltimos qo'shing"),
-                )
-              : ListView.builder(
-                  itemCount: todos.length,
-                  itemBuilder: (context, index) {
-                    print(todos[index].title);
-                    final newTodo = todos[index];
+      body: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: FutureBuilder(
+          future: todosViewmodel.list,
+          builder: (context, snapshot) {
+            print(snapshot.data);
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(snapshot.error.toString()),
+              );
+            }
+            if (!snapshot.hasData) {
+              return const Center(
+                child: Text("Todolar mavjud emas, iltimos qo'shing"),
+              );
+            }
+            final todos = snapshot.data;
+            return todos == null || todos.isEmpty
+                ? const Center(
+                    child: Text("Todolar mavjud emas, iltimos qo'shing"),
+                  )
+                : ListView.builder(
+                    itemCount: todos.length,
+                    itemBuilder: (context, index) {
+                      print(todos[index].title);
+                      final newTodo = todos[index];
 
-                    return TodoTile(
-                        onEdit: () {},
-                        onDelete: () {
-                          deleteTodo(newTodo);
-                        },
-                        onChanged: () {},
-                        todo: newTodo);
-                  },
-                );
-        },
+                      return TodoTile(
+                          onEdit: () {
+                            editTodo(newTodo);
+                          },
+                          onDelete: () {
+                            deleteTodo(newTodo);
+                          },
+                          onChanged: () {},
+                          todo: newTodo);
+                    },
+                  );
+          },
+        ),
       ),
     );
   }
